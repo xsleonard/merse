@@ -1,12 +1,12 @@
 use sdl2;
 use sdl2::surface::Surface;
 use sdl2_image;
-use sdl2_image::{ImageLoader, TextureLoader};
+use sdl2_image::{LoadSurface, LoadTexture};
 
 
 pub fn display(app_name: &str) {
     sdl2::init([sdl2::InitVideo]);
-    sdl2_image::init(~[sdl2_image::InitPng]);
+    sdl2_image::init([sdl2_image::InitPng]);
 
     let window = match sdl2::video::Window::new(
         app_name, sdl2::video::PosCentered, sdl2::video::PosCentered,
@@ -26,7 +26,7 @@ pub fn display(app_name: &str) {
     renderer.present();
 
     // Load a surface, and convert it to a texture bound to the renderer
-    let surface: ~Surface = match ImageLoader::from_file("test.png") {
+    let surface: ~Surface = match LoadSurface::from_file("test.png") {
         Ok(surface) => surface,
         Err(err) => fail!(format!("Failed to load png: {}", err))
     };
@@ -36,7 +36,7 @@ pub fn display(app_name: &str) {
     };
 
     // Load a texture directly via the renderer
-    // let texture = match renderer.load_texture_from_file("test.png") {
+    // let texture = match renderer.load_texture("test.png") {
     //     Ok(texture) => texture,
     //     Err(err) => fail!(format!("Could not set render target: {}", err))
     // };
