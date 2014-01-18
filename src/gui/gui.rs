@@ -25,6 +25,7 @@ pub fn display(app_name: &str) {
     renderer.clear();
     renderer.present();
 
+    // Load a surface, and convert it to a texture bound to the renderer
     let surface: ~Surface = match ImageLoader::from_file("test.png") {
         Ok(surface) => surface,
         Err(err) => fail!(format!("Failed to load png: {}", err))
@@ -34,6 +35,7 @@ pub fn display(app_name: &str) {
         Err(err) => fail!(format!("Failed to create surface: {}", err))
     };
 
+    // Load a texture directly via the renderer
     // let texture = match renderer.load_texture_from_file("test.png") {
     //     Ok(texture) => texture,
     //     Err(err) => fail!(format!("Could not set render target: {}", err))
