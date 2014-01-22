@@ -20,9 +20,9 @@ fn start(argc: int, argv: **u8) -> int {
 // TODO -- again, what is this doing exactly
 #[main]
 fn main() {
-    let mut window = gui::init(~"Merse");
-    while window.is_open() {
-        input::handle(window);
-        gui::display(window);
+    let mut gui_state = gui::Gui::new(~"Merse", &[~"test.png"]);
+    while gui_state.window.is_open() {
+        input::handle(gui_state.window);
+        gui_state.display();
     }
 }

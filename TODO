@@ -1,0 +1,5 @@
+TODO
+----
+
+* Load config file
+* Load pngs with SFML or stb_image and render

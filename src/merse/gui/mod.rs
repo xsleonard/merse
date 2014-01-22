@@ -1,4 +1,4 @@
-pub use self::gui::{init, display};
+pub use self::gui::Gui;
 
 #[path="./sfml.rs"]
 pub mod gui;
