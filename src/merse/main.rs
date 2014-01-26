@@ -24,7 +24,7 @@ fn start(argc: int, argv: **u8) -> int {
 fn main() {
     let c = config::load_config(~"./settings.json");
     let mut gui_state = gui::Gui::new(c.app_name.clone(), c.textures,
-                                      c.fullscreen);
+                                      c.width, c.height, c.fullscreen);
     while gui_state.window.is_open() {
         input::handle(gui_state.window);
         gui_state.display();

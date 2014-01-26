@@ -1,5 +1,7 @@
 {
   "app_name": "Merse",
   "fullscreen": false,
-  "textures": ["test.png"]
+  "textures": ["test.png"],
+  "width": 1280,
+  "height": 960
 }

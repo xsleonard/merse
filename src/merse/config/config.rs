@@ -8,6 +8,8 @@ pub struct Config {
     app_name: ~str,
     fullscreen: bool,
     textures: ~[~str],
+    width: uint,
+    height: uint,
 }
 
 pub fn load_config(filename: ~str) -> ~Config {

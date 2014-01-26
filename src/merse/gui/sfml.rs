@@ -9,8 +9,9 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn new(name: ~str, imagefiles: &[~str], fullscreen: bool) -> ~Gui {
-        let window = load_window(name, fullscreen);
+    pub fn new(name: ~str, imagefiles: &[~str], width: uint, height: uint,
+               fullscreen: bool) -> ~Gui {
+        let window = load_window(name, width, height, fullscreen);
         ~Gui {
             window: window,
             textures: load_textures(imagefiles),
@@ -39,13 +40,15 @@ impl Gui {
 
 }
 
-fn load_window(name: ~str, fullscreen: bool) -> ~RenderWindow {
+fn load_window(name: ~str, width: uint, height: uint,
+               fullscreen: bool) -> ~RenderWindow {
     let settings = ContextSettings::default();
-    let video = VideoMode::new_init(800, 600, 32);
-    let mut mode = Close;
-    if fullscreen {
-        mode = Fullscreen;
-    }
+    let video = VideoMode::new_init(width, height, 32);
+    let mode = if fullscreen {
+        Fullscreen
+    } else {
+        Close
+    };
     match RenderWindow::new(video, name, mode, &settings) {
         Some(window) => ~window,
         None => fail!("Couldn't create a new Render Window.")
