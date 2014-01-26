@@ -4,7 +4,7 @@ use rsfml::window::{event, keyboard};
 // Processes all available window/keyboard events
 pub fn handle(window: &mut RenderWindow) {
     loop {
-        if (handle_window_event(window)) {
+        if handle_window_event(window) {
             break
         }
     }
