@@ -1,49 +1,81 @@
 use rsfml::window::{ContextSettings, VideoMode, Close, Fullscreen};
 use rsfml::graphics::{Texture, Color, RenderWindow, Sprite};
+use rsfml::graphics::rect::IntRect;
 use rsfml::traits::drawable::Drawable;
-use rsfml::system::vector2::Vector2f;
+use rsfml::system::vector2::{Vector2i, Vector2f, ToVec};
+use dungeon::Floor;
+use config::SpritesheetConfig;
+
+struct Spritesheet {
+    texture: Texture,
+    size: uint,
+    tiles_wide: uint
+}
+
+impl Spritesheet {
+    fn get_pos(&self, value: uint) -> Vector2i {
+        return Vector2i::new((self.size * (value % self.tiles_wide)) as i32,
+                             (self.size * (value / self.tiles_wide)) as i32);
+    }
+}
 
 pub struct Gui {
+    size: Vector2i,
     window: ~RenderWindow,
-    textures: ~[Texture]
+    spritesheets: ~[Spritesheet]
 }
 
 impl Gui {
-    pub fn new(name: ~str, imagefiles: &[~str], width: uint, height: uint,
+    pub fn new(name: ~str, spritesheets: &[~SpritesheetConfig], size: Vector2i,
                fullscreen: bool) -> ~Gui {
-        let window = load_window(name, width, height, fullscreen);
+        let window = load_window(name, size, fullscreen);
         ~Gui {
+            size: size,
             window: window,
-            textures: load_textures(imagefiles),
+            spritesheets: load_spritesheets(spritesheets),
         }
     }
 
-    pub fn display(&mut self) {
+    pub fn display(&mut self, floor: &Floor) {
         // Clear the window
         self.window.clear(&Color::new_RGB(0, 200, 200));
-        self.draw_sprites();
+        self.draw_sprites(floor);
         // Display things on screen
         self.window.display();
     }
 
-    pub fn draw_sprites(&mut self) {
+    fn draw_sprites(&mut self, floor: &Floor) {
         // Iterate the dungeon floor,
         // lookup its sprite to draw,
         // set that sprites position to current pos
         // window.draw_sprite(sprite)
-        for tx in self.textures.iter() {
-            let mut sprite = Sprite::new_with_texture(tx).expect("No sprite");
-            sprite.set_position(&Vector2f::new(0., 0.));
-            sprite.draw_in_render_window(self.window)
+        let ss = &self.spritesheets[0];
+        let mut s = Sprite::new_with_texture(&ss.texture).expect("No sprite");
+
+        for t in floor.tiles.iter() {
+            let pos = self.get_screen_pos(t.position, ss.size);
+            let texpos = self.spritesheets[0].get_pos(t.value as uint);
+            // set the subtexture area
+            let rect = IntRect::new(texpos.x, texpos.y,
+                                    ss.size as i32, ss.size as i32);
+            s.set_texture_rect(&rect);
+            // set the screen position
+            s.set_position(&pos);
+            s.draw_in_render_window(self.window)
         }
     }
 
+    fn get_screen_pos(&self, pos: Vector2i,
+                      tilesize: uint) -> Vector2f {
+        Vector2i::new(pos.x * (tilesize as i32),
+                      pos.y * (tilesize as i32)).to_vector2f()
+    }
 }
 
-fn load_window(name: ~str, width: uint, height: uint,
+fn load_window(name: ~str, size: Vector2i,
                fullscreen: bool) -> ~RenderWindow {
     let settings = ContextSettings::default();
-    let video = VideoMode::new_init(width, height, 32);
+    let video = VideoMode::new_init(size.x as uint, size.y as uint, 32);
     let mode = if fullscreen {
         Fullscreen
     } else {
@@ -55,14 +87,19 @@ fn load_window(name: ~str, width: uint, height: uint,
     }
 }
 
-fn load_textures(filenames: &[~str]) -> ~[Texture] {
-    let mut textures: ~[Texture] = ~[];
-    for filename in filenames.iter() {
-        match Texture::new_from_file(filename.clone()) {
-            Some(tex) => textures.push(tex),
-            None =>  fail!(print!(
-                "Failed to load {} to texture", filename.clone()))
-        }
+fn load_spritesheets(config: &[~SpritesheetConfig]) -> ~[Spritesheet] {
+    let mut spritesheets: ~[Spritesheet] = ~[];
+    for c in config.iter() {
+        let filename = (*c).filename.clone();
+        let tx = match Texture::new_from_file(filename) {
+            Some(tex) => tex,
+            None =>  fail!(print!("Failed to load {} to texture", filename))
+        };
+        spritesheets.push(Spritesheet{
+            texture: tx,
+            size: (*c).size,
+            tiles_wide: (*c).tiles_wide
+        });
     }
-    textures
+    spritesheets
 }

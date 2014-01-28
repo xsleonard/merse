@@ -7,9 +7,13 @@ extern mod extra;
 // extern mod sdl2;
 // extern mod sdl2_image;
 
+use rsfml::system::vector2::Vector2i;
+use dungeon::Dungeon;
+
 mod gui;
 mod input;
 mod config;
+mod dungeon;
 
 // Override the runtime start fn to guarantee the window is run on the main
 // thread
@@ -23,10 +27,16 @@ fn start(argc: int, argv: **u8) -> int {
 #[main]
 fn main() {
     let c = config::load_config(~"./settings.json");
-    let mut gui_state = gui::Gui::new(c.app_name.clone(), c.textures,
-                                      c.width, c.height, c.fullscreen);
+
+    let dungeon_size = Vector2i::new(c.dungeon.width as i32,
+                                     c.dungeon.height as i32);
+    let dungeon = Dungeon::new(dungeon_size, c.dungeon.depth);
+
+    let window_size = Vector2i::new(c.width as i32, c.height as i32);
+    let mut gui_state = gui::Gui::new(c.app_name.clone(), c.spritesheets,
+                                      window_size, c.fullscreen);
     while gui_state.window.is_open() {
         input::handle(gui_state.window);
-        gui_state.display();
+        gui_state.display(dungeon.current_floor());
     }
 }

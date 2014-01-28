@@ -7,9 +7,24 @@ use std::io::fs::File;
 pub struct Config {
     app_name: ~str,
     fullscreen: bool,
-    textures: ~[~str],
+    spritesheets: ~[~SpritesheetConfig],
     width: uint,
     height: uint,
+    dungeon: DungeonConfig
+}
+
+#[deriving(Decodable)]
+pub struct DungeonConfig {
+    height: uint,
+    width: uint,
+    depth: uint
+}
+
+#[deriving(Decodable)]
+pub struct SpritesheetConfig {
+    filename: ~str,
+    size: uint,
+    tiles_wide: uint
 }
 
 pub fn load_config(filename: ~str) -> ~Config {

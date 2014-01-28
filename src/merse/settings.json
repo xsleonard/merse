@@ -1,7 +1,16 @@
 {
   "app_name": "Merse",
   "fullscreen": false,
-  "textures": ["test.png"],
-  "width": 1280,
-  "height": 960
+  "spritesheets": [{
+      "filename": "NethackTiles16.png",
+      "size": 16,
+      "tiles_wide": 40
+  }],
+  "width": 1248,
+  "height": 400,
+  "dungeon": {
+      "depth": 16,
+      "width": 78,
+      "height": 20
+  }
 }
