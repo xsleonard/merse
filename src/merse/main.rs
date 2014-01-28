@@ -7,7 +7,6 @@ extern mod extra;
 // extern mod sdl2;
 // extern mod sdl2_image;
 
-use rsfml::system::vector2::Vector2i;
 use dungeon::Dungeon;
 
 mod gui;
@@ -28,13 +27,11 @@ fn start(argc: int, argv: **u8) -> int {
 fn main() {
     let c = config::load_config(~"./settings.json");
 
-    let dungeon_size = Vector2i::new(c.dungeon.width as i32,
-                                     c.dungeon.height as i32);
-    let dungeon = Dungeon::new(dungeon_size, c.dungeon.depth);
+    let mut dungeon = Dungeon::new(c.dungeon.size(), c.dungeon.depth);
+    let spriteset = c.get_spritesets();
+    dungeon.generate_terrain(spriteset.get(&~"main"));
 
-    let window_size = Vector2i::new(c.width as i32, c.height as i32);
-    let mut gui_state = gui::Gui::new(c.app_name.clone(), c.spritesheets,
-                                      window_size, c.fullscreen);
+    let mut gui_state = gui::Gui::new(&c.window, c.spritesheets);
     while gui_state.window.is_open() {
         input::handle(gui_state.window);
         gui_state.display(dungeon.current_floor());

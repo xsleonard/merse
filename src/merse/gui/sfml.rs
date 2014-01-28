@@ -4,18 +4,18 @@ use rsfml::graphics::rect::IntRect;
 use rsfml::traits::drawable::Drawable;
 use rsfml::system::vector2::{Vector2i, Vector2f, ToVec};
 use dungeon::Floor;
-use config::SpritesheetConfig;
+use config::{SpritesheetConfig, WindowConfig};
 
 struct Spritesheet {
     texture: Texture,
-    size: uint,
+    tile_size: uint,
     tiles_wide: uint
 }
 
 impl Spritesheet {
     fn get_pos(&self, value: uint) -> Vector2i {
-        return Vector2i::new((self.size * (value % self.tiles_wide)) as i32,
-                             (self.size * (value / self.tiles_wide)) as i32);
+        return Vector2i::new((self.tile_size * (value % self.tiles_wide)) as i32,
+                             (self.tile_size * (value / self.tiles_wide)) as i32);
     }
 }
 
@@ -26,11 +26,11 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn new(name: ~str, spritesheets: &[~SpritesheetConfig], size: Vector2i,
-               fullscreen: bool) -> ~Gui {
-        let window = load_window(name, size, fullscreen);
+    pub fn new(wcfg: &WindowConfig, spritesheets: &[SpritesheetConfig]) -> ~Gui {
+        let window = load_window(wcfg.name.clone(), wcfg.size(),
+                                 wcfg.fullscreen);
         ~Gui {
-            size: size,
+            size: wcfg.size(),
             window: window,
             spritesheets: load_spritesheets(spritesheets),
         }
@@ -53,11 +53,11 @@ impl Gui {
         let mut s = Sprite::new_with_texture(&ss.texture).expect("No sprite");
 
         for t in floor.tiles.iter() {
-            let pos = self.get_screen_pos(t.position, ss.size);
+            let pos = self.get_screen_pos(t.position, ss.tile_size);
             let texpos = self.spritesheets[0].get_pos(t.value as uint);
             // set the subtexture area
             let rect = IntRect::new(texpos.x, texpos.y,
-                                    ss.size as i32, ss.size as i32);
+                                    ss.tile_size as i32, ss.tile_size as i32);
             s.set_texture_rect(&rect);
             // set the screen position
             s.set_position(&pos);
@@ -87,18 +87,19 @@ fn load_window(name: ~str, size: Vector2i,
     }
 }
 
-fn load_spritesheets(config: &[~SpritesheetConfig]) -> ~[Spritesheet] {
+fn load_spritesheets(config: &[SpritesheetConfig]) -> ~[Spritesheet] {
     let mut spritesheets: ~[Spritesheet] = ~[];
     for c in config.iter() {
-        let filename = (*c).filename.clone();
+        let cfg = c.clone();
+        let filename = cfg.filename.clone();
         let tx = match Texture::new_from_file(filename) {
             Some(tex) => tex,
             None =>  fail!(print!("Failed to load {} to texture", filename))
         };
         spritesheets.push(Spritesheet{
             texture: tx,
-            size: (*c).size,
-            tiles_wide: (*c).tiles_wide
+            tile_size: cfg.tile_size,
+            tiles_wide: cfg.tiles_wide
         });
     }
     spritesheets

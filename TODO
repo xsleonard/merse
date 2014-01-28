@@ -2,4 +2,20 @@ TODO
 ----
 
 * Load config file
+    DONE
 * Load pngs with SFML or stb_image and render
+    DONE
+* Create dungeon structure
+    DONE
+* Load spritesheets
+    DONE
+
+* Map tile names to spritesheet indices
+    DONE
+
+* Generate a map
+* Add a character object
+* Move the character
+* Collision detection
+* Add a stairwell
+* Move between floors

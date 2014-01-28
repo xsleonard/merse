@@ -1,16 +1,35 @@
 {
-  "app_name": "Merse",
-  "fullscreen": false,
-  "spritesheets": [{
-      "filename": "NethackTiles16.png",
-      "size": 16,
-      "tiles_wide": 40
-  }],
-  "width": 1248,
-  "height": 400,
+  "window": {
+    "name": "Merse",
+    "fullscreen": false,
+    "width": 1248,
+    "height": 400
+  },
   "dungeon": {
-      "depth": 16,
-      "width": 78,
-      "height": 20
-  }
+    "depth": 16,
+    "width": 78,
+    "height": 20
+  },
+  "spritesheets": [{
+    "name": "main",
+    "filename": "NethackTiles16.png",
+    "tile_size": 16,
+    "tiles_wide": 40
+  }],
+  "spritesets": [{
+      "name": "main",
+      "tiles": [{
+        "name": "floor",
+        "x": 8,
+        "y": 21
+      }, {
+        "name": "empty",
+        "x": 29,
+        "y": 20
+      }, {
+        "name": "wall",
+        "x": 31,
+        "y": 20
+      }]
+  }]
 }
