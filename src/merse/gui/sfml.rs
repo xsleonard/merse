@@ -4,9 +4,9 @@ use rsfml::graphics::{Texture, Color, RenderWindow, Sprite};
 use rsfml::graphics::rect::IntRect;
 use rsfml::traits::drawable::Drawable;
 use rsfml::system::vector2::{Vector2i, Vector2f, ToVec};
-use dungeon::{Floor, Tile};
+use dungeon::{Dungeon};
 use units::Player;
-use config::{SpritesheetConfig, WindowConfig, SpritesheetConfigs};
+use config::{SpriteConfig, WindowConfig, SpritesheetConfigs};
 
 struct Spritesheet {
     texture: Texture,
@@ -28,12 +28,12 @@ impl Spritesheet {
         IntRect::new(pos.x, pos.y, ts, ts)
     }
 
-    fn place_sprite(&self, s: &mut Sprite, t: &Tile) {
+    fn place_sprite(&self, s: &mut Sprite, c: &SpriteConfig, p: Vector2i) {
         // set the subtexture area
-        let rect = self.get_rect(t.value);
+        let rect = self.get_rect(c.val);
         s.set_texture_rect(&rect);
         // set the screen position
-        let pos = self.get_screen_pos(t.position);
+        let pos = self.get_screen_pos(p);
         s.set_position(&pos);
     }
 
@@ -61,24 +61,26 @@ impl Gui {
         }
     }
 
-    pub fn display(&mut self, floor: &Floor, player: &Player) {
+    pub fn display(&mut self, dungeon: &Dungeon, player: &Player) {
         // Clear the window
         self.window.clear(&Color::new_RGB(0, 200, 200));
-        self.draw_sprites(floor);
+        self.draw_sprites(dungeon);
         self.draw_player(player);
         // Flip the screen
         self.window.display();
     }
 
-    fn draw_sprites(&mut self, floor: &Floor) {
+    fn draw_sprites(&mut self, dungeon: &Dungeon) {
         // Iterate the dungeon floor,
         // lookup its sprite to draw,
         // set that sprites position to current pos
         // window.draw_sprite(sprite)
         let ss = self.spritesheets.get(&~"main");
         let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
+        let floor = dungeon.current_floor();
         for t in floor.tiles.iter() {
-            ss.place_sprite(s, t);
+            let c = dungeon.sprite(t.sprite);
+            ss.place_sprite(s, c, t.position);
             s.draw_in_render_window(self.window);
         }
     }
@@ -86,7 +88,7 @@ impl Gui {
     fn draw_player(&mut self, player: &Player) {
         let ss = self.spritesheets.get(&~"main");
         let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
-        ss.place_sprite(s, &player.tile());
+        ss.place_sprite(s, &player.sprite, player.pos.p);
         s.draw_in_render_window(self.window);
     }
 }

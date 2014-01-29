@@ -9,7 +9,6 @@ extern mod extra;
 
 use dungeon::Dungeon;
 use units::Player;
-use rsfml::system::vector2::Vector2i;
 
 mod gui;
 mod input;
@@ -29,16 +28,16 @@ fn start(argc: int, argv: **u8) -> int {
 #[main]
 fn main() {
     let c = ~config::load_config(~"./settings.json");
-    let mut dungeon = ~Dungeon::new(c.dungeon.size(), c.dungeon.depth);
+    let mut dungeon = ~Dungeon::new(&c.sprites, c.dungeon.size(),
+                                    c.dungeon.depth);
     let mut player = ~Player::new(dungeon.center(),
-                                  c.sprites.get(&~"player").val);
+                                  c.sprites.map.get(&~"player").clone());
     let mut gui_state = gui::Gui::new(&c.window, &c.spritesheets);
 
     dungeon.generate_terrain(&c.sprites);
 
     while gui_state.window.is_open() {
         input::handle(gui_state.window, dungeon, player);
-        let floor = dungeon.current_floor();
-        gui_state.display(floor, player);
+        gui_state.display(dungeon, player);
     }
 }

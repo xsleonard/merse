@@ -1,26 +1,19 @@
 use rsfml::system::vector2::Vector2i;
 use self::position::Position;
-use dungeon::Tile;
+use config::SpriteConfig;
 
 mod position;
 
 pub struct Player {
     pos: Position,
-    sprite: uint,
+    sprite: SpriteConfig,
 }
 
 impl Player {
-    pub fn new(pos: Vector2i, sprite: uint) -> Player {
+    pub fn new(pos: Vector2i, sprite: SpriteConfig) -> Player {
         Player {
             pos: Position{ p: pos },
             sprite: sprite,
-        }
-    }
-
-    pub fn tile(&self) -> Tile {
-        Tile{
-            value: self.sprite,
-            position: self.pos.p
         }
     }
 }

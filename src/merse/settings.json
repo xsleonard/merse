@@ -21,19 +21,23 @@
       "tiles": [{
         "name": "floor",
         "x": 8,
-        "y": 21
+        "y": 21,
+        "solid": false
       }, {
         "name": "empty",
         "x": 29,
-        "y": 20
+        "y": 20,
+        "solid": false
       }, {
         "name": "wall",
         "x": 31,
-        "y": 20
+        "y": 20,
+        "solid": true
       }, {
         "name": "player",
         "x": 16,
-        "y": 8
+        "y": 8,
+        "solid": true
       }]
   }]
 }

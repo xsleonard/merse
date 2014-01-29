@@ -39,30 +39,19 @@ impl DecodableConfig {
     pub fn get_spritesheets(&self) -> SpritesheetConfigs {
         let mut h: SpritesheetConfigs = HashMap::new();
         for s in self.spritesheets.iter() {
-            h.insert((*s).name.clone(), s.clone());
+            h.insert(s.name.clone(), s.clone());
         }
         h
     }
 
     // Returns a map from sprite names to their configs
     pub fn get_sprites(&self) -> SpriteConfigs {
-        let mut h: SpriteConfigs = HashMap::new();
+        let mut h: SpriteConfigs = SpriteConfigs::new();
         let sheets = self.get_spritesheets();
-
         for s in self.spritesets.iter() {
-            let set_name = (*s).name.clone();
-            let sheet = sheets.get(&set_name);
-            for t in (*s).tiles.iter() {
-                let tile = t.clone();
-                if h.contains_key_equiv(&tile.name) {
-                    fail!(format!("Duplicate tile \"{}\"", tile.name))
-                }
-                let val = sheet.tiles_wide * tile.y + tile.x;
-                h.insert(tile.name, TileConfig{
-                    val: val,
-                    spritesheet: set_name.clone(),
-                    name: t.name.clone()
-                });
+            let sheet = sheets.get(&s.name);
+            for t in s.tiles.iter() {
+                h.add(t.clone(), sheet);
             }
         }
         h
@@ -96,26 +85,68 @@ pub struct SpritesheetConfig {
 #[deriving(Clone)]
 pub struct SpritesetConfig {
     name: ~str,
-    tiles: ~[~DecodableTileConfig]
+    tiles: ~[~DecodableSpriteConfig]
 }
 
 #[deriving(Decodable)]
 #[deriving(Clone)]
-pub struct DecodableTileConfig {
+pub struct DecodableSpriteConfig {
     name: ~str,
     x: uint,
-    y: uint
+    y: uint,
+    solid: bool,
 }
 
 #[deriving(Clone)]
-pub struct TileConfig {
+pub struct SpriteConfig {
+    index: uint,
     spritesheet: ~str,
     name: ~str,
     val: uint,
+    solid: bool,
 }
 
-// Maps from tile names to TileConfigs
-pub type SpriteConfigs = HashMap<~str, TileConfig>;
+impl SpriteConfig {
+    pub fn from_decodable_config(tile: &DecodableSpriteConfig,
+                                 sheet: &SpritesheetConfig,
+                                 index: uint) -> SpriteConfig {
+        SpriteConfig{
+            index: index,
+            spritesheet: sheet.name.clone(),
+            name: tile.name.clone(),
+            solid: tile.solid.clone(),
+            val: sheet.tiles_wide * tile.y + tile.x,
+        }
+    }
+}
+
+// Maps from tile names to SpriteConfigs
+#[deriving(Clone)]
+pub struct SpriteConfigs {
+    map: HashMap<~str, SpriteConfig>,
+    arr: ~[SpriteConfig]
+}
+
+impl SpriteConfigs {
+    pub fn new() -> SpriteConfigs {
+        SpriteConfigs{
+            map: HashMap::new(),
+            arr: ~[],
+        }
+    }
+
+    pub fn add(&mut self, tile: &DecodableSpriteConfig,
+               sheet: &SpritesheetConfig) -> SpriteConfig {
+        if self.map.contains_key_equiv(&tile.name) {
+            fail!(format!("Duplicate tile \"{}\"", tile.name))
+        }
+        let sc = SpriteConfig::from_decodable_config(tile, sheet,
+                                                     self.arr.len());
+        self.map.insert(tile.name.clone(), sc.clone());
+        self.arr.push(sc.clone());
+        sc
+    }
+}
 
 // Maps from spritesheet name to SpritesheetConfigs
 pub type SpritesheetConfigs = HashMap<~str, SpritesheetConfig>;

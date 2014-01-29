@@ -1,16 +1,17 @@
+use std::hashmap::HashMap;
 use rsfml::system::vector2::Vector2i;
-use config::SpriteConfigs;
+use config::{SpriteConfigs, SpriteConfig};
 
 // A tile is a single cell in the dungeon
 pub struct Tile {
-    value: uint,
+    sprite: uint,
     position: Vector2i
 }
 
 impl Tile {
-    pub fn new(pos: Vector2i, value: uint) -> Tile {
+    pub fn new(pos: Vector2i, sprite: uint) -> Tile {
         Tile{
-            value: value,
+            sprite: sprite,
             position: pos
         }
     }
@@ -48,46 +49,47 @@ impl Floor {
         y * self.dim.x + x
     }
 
-    fn generate_terrain(&mut self, sprites: &SpriteConfigs) {
+    fn generate_terrain(&mut self, sprites: &HashMap<~str, SpriteConfig>) {
         for x in range(0, self.dim.x) {
             for y in range(0, self.dim.y) {
                 let i = self.index(x, y);
-                self.tiles[i].value = sprites.get(&~"floor").val;
+                self.tiles[i].sprite = sprites.get(&~"floor").index;
             }
         }
         for x in range(0, self.dim.x) {
             let top = self.index(x, 0);
-            self.tiles[top].value = sprites.get(&~"wall").val;
+            self.tiles[top].sprite = sprites.get(&~"wall").index;
             let bottom = self.index(x, self.dim.y-1);
-            self.tiles[bottom].value = sprites.get(&~"wall").val;
+            self.tiles[bottom].sprite = sprites.get(&~"wall").index;
         }
         for y in range(0, self.dim.y) {
             let left = self.index(0, y);
-            self.tiles[left].value = sprites.get(&~"wall").val;
+            self.tiles[left].sprite = sprites.get(&~"wall").index;
             let right = self.index(self.dim.x-1, y);
-            self.tiles[right].value = sprites.get(&~"wall").val;
+            self.tiles[right].sprite = sprites.get(&~"wall").index;
         }
     }
 
-    // pub fn tile_at<'r>(&'r self, pos: Vector2i) -> &'r Tile {
-    //     return &self.tiles[self.dim.x * pos.y + pos.x]
-    // }
-
+    pub fn tile_at<'r>(&'r self, pos: Vector2i) -> &'r Tile {
+        return &self.tiles[self.dim.x * pos.y + pos.x]
+    }
 }
 
 // A dungeon is composed of multiple floors
 pub struct Dungeon {
     dim: Vector2i,
     floor: uint,
-    floors: ~[Floor]
+    floors: ~[Floor],
+    sprites: ~SpriteConfigs,
 }
 
 impl Dungeon {
-    pub fn new(dim: Vector2i, depth: uint) -> Dungeon {
+    pub fn new(sprites: &SpriteConfigs, dim: Vector2i, depth: uint) -> Dungeon {
         Dungeon{
             floor: depth - 1,
             dim: dim,
             floors: Floor::new_multiple(dim, depth),
+            sprites: ~sprites.clone(),
         }
     }
 
@@ -97,13 +99,17 @@ impl Dungeon {
     }
 
     pub fn current_floor<'r>(&'r self) -> &'r Floor {
-        return &self.floors[self.floor]
+        &self.floors[self.floor]
     }
 
     // Create the terrain for all the dungeon floor
     pub fn generate_terrain(&mut self, sprites: &SpriteConfigs) {
         for f in self.floors.mut_iter() {
-            f.generate_terrain(sprites);
+            f.generate_terrain(&sprites.map);
         }
+    }
+
+    pub fn sprite<'r>(&'r self, sprite: uint) -> &'r SpriteConfig {
+        &self.sprites.arr[sprite]
     }
 }
