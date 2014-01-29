@@ -1,36 +1,43 @@
 use rsfml::graphics::{RenderWindow};
 use rsfml::window::{event, keyboard};
+use units::Player;
+use dungeon::{Dungeon, Floor};
 
-// Processes all available window/keyboard events
-pub fn handle(window: &mut RenderWindow) {
+/// Processes all available window/keyboard events
+pub fn handle(window: &mut RenderWindow, dungeon: &mut Dungeon,
+              player: &mut Player) {
+    let floor = dungeon.current_floor();
     loop {
-        if handle_window_event(window) {
-            break
+        let e = window.poll_event();
+        match e {
+            event::NoEvent => break,
+            _ => {}
         }
+        handle_window_event(window, e);
+        handle_player_event(player, floor, e);
     }
 }
 
-// Returns true if NoEvent was encountered
-fn handle_window_event(window: &mut RenderWindow) -> bool {
-    let mut consumed = false;
-    let e = window.poll_event();
+fn handle_window_event(window: &mut RenderWindow, e: event::Event) {
     match e {
         event::Closed => window.close(),
-        event::KeyReleased{..} => handle_key_released(window, e),
-        event::NoEvent => consumed = true,
+        event::KeyReleased{code: code, ..} => match code {
+            keyboard::Escape => window.close(),
+            _ => {}
+        },
         _ => {}
     };
-    consumed
 }
 
-// Triggers callbacks for key release events
-fn handle_key_released(window: &mut RenderWindow, e: event::Event) {
-    let code = match e {
-        event::KeyReleased{code: code, ..} => code,
-        _ => fail!("Event is not a KeyReleased event")
-    };
-    match code {
-        keyboard::Escape => window.close(),
+fn handle_player_event(player: &mut Player, floor: &Floor, e: event::Event) {
+    match e {
+        event::KeyReleased{code: code, ..} => match code {
+            keyboard::Left => player.pos.move(floor, -1, 0),
+            keyboard::Right => player.pos.move(floor, 1, 0),
+            keyboard::Up => player.pos.move(floor, 0, -1),
+            keyboard::Down => player.pos.move(floor, 0, 1),
+            _ => {}
+        },
         _ => {}
-    };
+    }
 }

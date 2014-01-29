@@ -34,7 +34,7 @@ impl Config {
             for t in set.tiles.iter() {
                 let tile = t.clone();
                 let val = sheet.tiles_wide * tile.y + tile.x;
-                ih.insert(tile.name, val as int);
+                ih.insert(tile.name, val);
             }
             h.insert(set.name, ih);
         }
@@ -72,7 +72,7 @@ pub struct SpritesetConfig {
 }
 
 // Maps from tile names to indices in the spritesheet
-pub type Spriteset = ~HashMap<~str, int>;
+pub type Spriteset = ~HashMap<~str, uint>;
 
 #[deriving(Decodable)]
 #[deriving(Clone)]

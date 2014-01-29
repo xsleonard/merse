@@ -3,7 +3,8 @@ use rsfml::graphics::{Texture, Color, RenderWindow, Sprite};
 use rsfml::graphics::rect::IntRect;
 use rsfml::traits::drawable::Drawable;
 use rsfml::system::vector2::{Vector2i, Vector2f, ToVec};
-use dungeon::Floor;
+use dungeon::{Floor, Tile};
+use units::Player;
 use config::{SpritesheetConfig, WindowConfig};
 
 struct Spritesheet {
@@ -16,6 +17,27 @@ impl Spritesheet {
     fn get_pos(&self, value: uint) -> Vector2i {
         return Vector2i::new((self.tile_size * (value % self.tiles_wide)) as i32,
                              (self.tile_size * (value / self.tiles_wide)) as i32);
+    }
+
+    fn get_rect(&self, value: uint) -> IntRect {
+        let pos = self.get_pos(value);
+        let ts = self.tile_size as i32;
+        IntRect::new(pos.x, pos.y, ts, ts)
+    }
+
+    fn place_sprite(&self, s: &mut Sprite, t: &Tile) {
+        // set the subtexture area
+        let rect = self.get_rect(t.value);
+        s.set_texture_rect(&rect);
+        // set the screen position
+        let pos = self.get_screen_pos(t.position);
+        s.set_position(&pos);
+    }
+
+
+    fn get_screen_pos(&self, pos: Vector2i) -> Vector2f {
+        Vector2i::new(pos.x * (self.tile_size as i32),
+                      pos.y * (self.tile_size as i32)).to_vector2f()
     }
 }
 
@@ -36,11 +58,12 @@ impl Gui {
         }
     }
 
-    pub fn display(&mut self, floor: &Floor) {
+    pub fn display(&mut self, floor: &Floor, player: &Player) {
         // Clear the window
         self.window.clear(&Color::new_RGB(0, 200, 200));
         self.draw_sprites(floor);
-        // Display things on screen
+        self.draw_player(player);
+        // Flip the screen
         self.window.display();
     }
 
@@ -50,25 +73,19 @@ impl Gui {
         // set that sprites position to current pos
         // window.draw_sprite(sprite)
         let ss = &self.spritesheets[0];
-        let mut s = Sprite::new_with_texture(&ss.texture).expect("No sprite");
-
+        let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
+        // let mut _s = &s;
         for t in floor.tiles.iter() {
-            let pos = self.get_screen_pos(t.position, ss.tile_size);
-            let texpos = self.spritesheets[0].get_pos(t.value as uint);
-            // set the subtexture area
-            let rect = IntRect::new(texpos.x, texpos.y,
-                                    ss.tile_size as i32, ss.tile_size as i32);
-            s.set_texture_rect(&rect);
-            // set the screen position
-            s.set_position(&pos);
-            s.draw_in_render_window(self.window)
+            ss.place_sprite(s, t);
+            s.draw_in_render_window(self.window);
         }
     }
 
-    fn get_screen_pos(&self, pos: Vector2i,
-                      tilesize: uint) -> Vector2f {
-        Vector2i::new(pos.x * (tilesize as i32),
-                      pos.y * (tilesize as i32)).to_vector2f()
+    fn draw_player(&mut self, player: &Player) {
+        let ss = &self.spritesheets[0];
+        let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
+        ss.place_sprite(s, &player.tile());
+        s.draw_in_render_window(self.window);
     }
 }
 

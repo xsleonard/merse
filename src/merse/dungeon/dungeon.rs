@@ -3,12 +3,12 @@ use config::Spriteset;
 
 // A tile is a single cell in the dungeon
 pub struct Tile {
-    value: int,
+    value: uint,
     position: Vector2i
 }
 
 impl Tile {
-    pub fn new(pos: Vector2i, value: int) -> Tile {
+    pub fn new(pos: Vector2i, value: uint) -> Tile {
         Tile{
             value: value,
             position: pos
@@ -83,12 +83,17 @@ pub struct Dungeon {
 }
 
 impl Dungeon {
-    pub fn new(dim: Vector2i, depth: uint) -> ~Dungeon {
-        ~Dungeon{
+    pub fn new(dim: Vector2i, depth: uint) -> Dungeon {
+        Dungeon{
             floor: depth - 1,
             dim: dim,
             floors: Floor::new_multiple(dim, depth),
         }
+    }
+
+    /// Returns the center coordinate of the current floor
+    pub fn center(&self) -> Vector2i {
+        Vector2i::new(self.dim.x / 2, self.dim.y / 2)
     }
 
     pub fn current_floor<'r>(&'r self) -> &'r Floor {

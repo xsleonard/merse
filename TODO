@@ -14,8 +14,13 @@ TODO
     DONE
 
 * Generate a map
+    DONE (very simple)
+
 * Add a character object
+    DONE
 * Move the character
+    DONE
+
 * Collision detection
 * Add a stairwell
 * Move between floors
