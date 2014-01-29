@@ -1,48 +1,76 @@
-use extra::json;
-use extra::serialize::Decodable;
 use std::path::Path;
 use std::io::fs::File;
-use rsfml::system::vector2::Vector2i;
 use std::hashmap::HashMap;
+use extra::json;
+use extra::serialize::Decodable;
+use rsfml::system::vector2::Vector2i;
 
-#[deriving(Decodable)]
+/// More advanced structures need to be built from the json data, so we
+/// convert a DecodableConfig to this
 pub struct Config {
+    window: WindowConfig,
+    spritesheets: SpritesheetConfigs,
+    sprites: SpriteConfigs,
+    dungeon: DungeonConfig
+}
+
+impl Config {
+    pub fn from_decodable_config(c: &DecodableConfig) -> Config {
+        Config{
+            window: c.window.clone(),
+            dungeon: c.dungeon.clone(),
+            spritesheets: c.get_spritesheets(),
+            sprites: c.get_sprites(),
+        }
+    }
+}
+
+/// This contains the JSON representation
+#[deriving(Decodable)]
+pub struct DecodableConfig {
     window: WindowConfig,
     spritesheets: ~[SpritesheetConfig],
     spritesets: ~[SpritesetConfig],
     dungeon: DungeonConfig
 }
 
-impl Config {
+impl DecodableConfig {
     // Returns a map from spritesheet names to their configs
-    pub fn get_spritesheets(&self) -> ~HashMap<~str, SpritesheetConfig> {
-        let mut h: ~HashMap<~str, SpritesheetConfig> = ~HashMap::new();
+    pub fn get_spritesheets(&self) -> SpritesheetConfigs {
+        let mut h: SpritesheetConfigs = HashMap::new();
         for s in self.spritesheets.iter() {
             h.insert((*s).name.clone(), s.clone());
         }
         h
     }
 
-    // Returns a map from spritesheet name to a spriteset
-    pub fn get_spritesets(&self) -> ~HashMap<~str, Spriteset> {
-        let mut h: ~HashMap<~str, Spriteset> = ~HashMap::new();
+    // Returns a map from sprite names to their configs
+    pub fn get_sprites(&self) -> SpriteConfigs {
+        let mut h: SpriteConfigs = HashMap::new();
         let sheets = self.get_spritesheets();
+
         for s in self.spritesets.iter() {
-            let set = s.clone();
-            let sheet = sheets.get(&set.name);
-            let mut ih: Spriteset = ~HashMap::new();
-            for t in set.tiles.iter() {
+            let set_name = (*s).name.clone();
+            let sheet = sheets.get(&set_name);
+            for t in (*s).tiles.iter() {
                 let tile = t.clone();
+                if h.contains_key_equiv(&tile.name) {
+                    fail!(format!("Duplicate tile \"{}\"", tile.name))
+                }
                 let val = sheet.tiles_wide * tile.y + tile.x;
-                ih.insert(tile.name, val);
+                h.insert(tile.name, TileConfig{
+                    val: val,
+                    spritesheet: set_name.clone(),
+                    name: t.name.clone()
+                });
             }
-            h.insert(set.name, ih);
         }
         h
     }
 }
 
 #[deriving(Decodable)]
+#[deriving(Clone)]
 pub struct DungeonConfig {
     height: uint,
     width: uint,
@@ -68,21 +96,32 @@ pub struct SpritesheetConfig {
 #[deriving(Clone)]
 pub struct SpritesetConfig {
     name: ~str,
-    tiles: ~[~TileConfig]
+    tiles: ~[~DecodableTileConfig]
 }
-
-// Maps from tile names to indices in the spritesheet
-pub type Spriteset = ~HashMap<~str, uint>;
 
 #[deriving(Decodable)]
 #[deriving(Clone)]
-pub struct TileConfig {
+pub struct DecodableTileConfig {
     name: ~str,
     x: uint,
     y: uint
 }
 
+#[deriving(Clone)]
+pub struct TileConfig {
+    spritesheet: ~str,
+    name: ~str,
+    val: uint,
+}
+
+// Maps from tile names to TileConfigs
+pub type SpriteConfigs = HashMap<~str, TileConfig>;
+
+// Maps from spritesheet name to SpritesheetConfigs
+pub type SpritesheetConfigs = HashMap<~str, SpritesheetConfig>;
+
 #[deriving(Decodable)]
+#[deriving(Clone)]
 pub struct WindowConfig {
     name: ~str,
     width: uint,
@@ -102,7 +141,8 @@ pub fn load_config(filename: ~str) -> ~Config {
     let data = read_config(filename);
     let jsonobj = json::from_str(data);
     let mut decoder = json::Decoder::new(jsonobj.unwrap());
-    ~Decodable::decode(&mut decoder)
+    let config: ~DecodableConfig = ~Decodable::decode(&mut decoder);
+    ~Config::from_decodable_config(config)
 }
 
 fn read_config(filename: ~str) -> ~str {

@@ -1,5 +1,5 @@
 use rsfml::system::vector2::Vector2i;
-use config::Spriteset;
+use config::SpriteConfigs;
 
 // A tile is a single cell in the dungeon
 pub struct Tile {
@@ -48,24 +48,24 @@ impl Floor {
         y * self.dim.x + x
     }
 
-    fn generate_terrain(&mut self, sprites: &Spriteset) {
+    fn generate_terrain(&mut self, sprites: &SpriteConfigs) {
         for x in range(0, self.dim.x) {
             for y in range(0, self.dim.y) {
                 let i = self.index(x, y);
-                self.tiles[i].value = sprites.get(&~"floor").clone();
+                self.tiles[i].value = sprites.get(&~"floor").val;
             }
         }
         for x in range(0, self.dim.x) {
             let top = self.index(x, 0);
-            self.tiles[top].value = sprites.get(&~"wall").clone();
+            self.tiles[top].value = sprites.get(&~"wall").val;
             let bottom = self.index(x, self.dim.y-1);
-            self.tiles[bottom].value = sprites.get(&~"wall").clone();
+            self.tiles[bottom].value = sprites.get(&~"wall").val;
         }
         for y in range(0, self.dim.y) {
             let left = self.index(0, y);
-            self.tiles[left].value = sprites.get(&~"wall").clone();
+            self.tiles[left].value = sprites.get(&~"wall").val;
             let right = self.index(self.dim.x-1, y);
-            self.tiles[right].value = sprites.get(&~"wall").clone();
+            self.tiles[right].value = sprites.get(&~"wall").val;
         }
     }
 
@@ -101,9 +101,9 @@ impl Dungeon {
     }
 
     // Create the terrain for all the dungeon floor
-    pub fn generate_terrain(&mut self, spriteset: &Spriteset) {
+    pub fn generate_terrain(&mut self, sprites: &SpriteConfigs) {
         for f in self.floors.mut_iter() {
-            f.generate_terrain(spriteset);
+            f.generate_terrain(sprites);
         }
     }
 }

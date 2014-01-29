@@ -28,16 +28,14 @@ fn start(argc: int, argv: **u8) -> int {
 // TODO -- again, what is this doing exactly
 #[main]
 fn main() {
-    let c = config::load_config(~"./settings.json");
-
+    let c = ~config::load_config(~"./settings.json");
     let mut dungeon = ~Dungeon::new(c.dungeon.size(), c.dungeon.depth);
-    let spriteset = c.get_spritesets();
-    let main_spriteset = spriteset.get(&~"main");
     let mut player = ~Player::new(dungeon.center(),
-                                  main_spriteset.get(&~"player").clone());
-    dungeon.generate_terrain(main_spriteset);
+                                  c.sprites.get(&~"player").val);
+    let mut gui_state = gui::Gui::new(&c.window, &c.spritesheets);
 
-    let mut gui_state = gui::Gui::new(&c.window, c.spritesheets);
+    dungeon.generate_terrain(&c.sprites);
+
     while gui_state.window.is_open() {
         input::handle(gui_state.window, dungeon, player);
         let floor = dungeon.current_floor();

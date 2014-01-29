@@ -1,3 +1,4 @@
+use std::hashmap::HashMap;
 use rsfml::window::{ContextSettings, VideoMode, Close, Fullscreen};
 use rsfml::graphics::{Texture, Color, RenderWindow, Sprite};
 use rsfml::graphics::rect::IntRect;
@@ -5,13 +6,15 @@ use rsfml::traits::drawable::Drawable;
 use rsfml::system::vector2::{Vector2i, Vector2f, ToVec};
 use dungeon::{Floor, Tile};
 use units::Player;
-use config::{SpritesheetConfig, WindowConfig};
+use config::{SpritesheetConfig, WindowConfig, SpritesheetConfigs};
 
 struct Spritesheet {
     texture: Texture,
     tile_size: uint,
     tiles_wide: uint
 }
+
+type Spritesheets = HashMap<~str, Spritesheet>;
 
 impl Spritesheet {
     fn get_pos(&self, value: uint) -> Vector2i {
@@ -34,7 +37,6 @@ impl Spritesheet {
         s.set_position(&pos);
     }
 
-
     fn get_screen_pos(&self, pos: Vector2i) -> Vector2f {
         Vector2i::new(pos.x * (self.tile_size as i32),
                       pos.y * (self.tile_size as i32)).to_vector2f()
@@ -44,17 +46,18 @@ impl Spritesheet {
 pub struct Gui {
     size: Vector2i,
     window: ~RenderWindow,
-    spritesheets: ~[Spritesheet]
+    spritesheets: ~Spritesheets
 }
 
 impl Gui {
-    pub fn new(wcfg: &WindowConfig, spritesheets: &[SpritesheetConfig]) -> ~Gui {
+    pub fn new(wcfg: &WindowConfig,
+               spritesheets: &SpritesheetConfigs) -> ~Gui {
         let window = load_window(wcfg.name.clone(), wcfg.size(),
                                  wcfg.fullscreen);
         ~Gui {
             size: wcfg.size(),
             window: window,
-            spritesheets: load_spritesheets(spritesheets),
+            spritesheets: ~load_spritesheets(spritesheets),
         }
     }
 
@@ -72,9 +75,8 @@ impl Gui {
         // lookup its sprite to draw,
         // set that sprites position to current pos
         // window.draw_sprite(sprite)
-        let ss = &self.spritesheets[0];
+        let ss = self.spritesheets.get(&~"main");
         let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
-        // let mut _s = &s;
         for t in floor.tiles.iter() {
             ss.place_sprite(s, t);
             s.draw_in_render_window(self.window);
@@ -82,7 +84,7 @@ impl Gui {
     }
 
     fn draw_player(&mut self, player: &Player) {
-        let ss = &self.spritesheets[0];
+        let ss = self.spritesheets.get(&~"main");
         let mut s = ~Sprite::new_with_texture(&ss.texture).expect("No sprite");
         ss.place_sprite(s, &player.tile());
         s.draw_in_render_window(self.window);
@@ -104,16 +106,15 @@ fn load_window(name: ~str, size: Vector2i,
     }
 }
 
-fn load_spritesheets(config: &[SpritesheetConfig]) -> ~[Spritesheet] {
-    let mut spritesheets: ~[Spritesheet] = ~[];
-    for c in config.iter() {
-        let cfg = c.clone();
+fn load_spritesheets(config: &SpritesheetConfigs) -> Spritesheets {
+    let mut spritesheets: Spritesheets = HashMap::new();
+    for (_, cfg) in config.iter() {
         let filename = cfg.filename.clone();
         let tx = match Texture::new_from_file(filename) {
             Some(tex) => tex,
             None =>  fail!(print!("Failed to load {} to texture", filename))
         };
-        spritesheets.push(Spritesheet{
+        spritesheets.insert(cfg.name.clone(), Spritesheet{
             texture: tx,
             tile_size: cfg.tile_size,
             tiles_wide: cfg.tiles_wide
