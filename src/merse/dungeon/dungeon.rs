@@ -1,6 +1,9 @@
-use std::hashmap::HashMap;
+use std::rand::{random, Rand};
+use std::ops::{Sub, Add, Rem};
+use std::vec::build;
 use rsfml::system::vector2::Vector2i;
 use config::{SpriteConfigs, SpriteConfig};
+use units::Player;
 
 // A tile is a single cell in the dungeon
 pub struct Tile {
@@ -20,11 +23,13 @@ impl Tile {
 // Floor represent a level of the dungeon
 pub struct Floor {
     dim: Vector2i,
-    tiles: ~[Tile]
+    level: uint,
+    tiles: ~[Tile],
+    downstairs: Vector2i,
 }
 
 impl Floor {
-    pub fn new(dim: Vector2i) -> Floor {
+    pub fn new(dim: Vector2i, level: uint) -> Floor {
         let mut tiles: ~[Tile] = ~[];
         for y in range(0, dim.y) {
             for x in range(0, dim.x) {
@@ -34,13 +39,15 @@ impl Floor {
         Floor{
             dim: dim,
             tiles: tiles,
+            level: level,
+            downstairs: Vector2i::new(0, 0),
         }
     }
 
     pub fn new_multiple(dim: Vector2i, depth: uint) -> ~[Floor] {
         let mut floors: ~[Floor] = ~[];
-        for _ in range(0, depth) {
-            floors.push(Floor::new(dim));
+        for level in range(0, depth) {
+            floors.push(Floor::new(dim, level));
         }
         floors
     }
@@ -49,7 +56,17 @@ impl Floor {
         y * self.dim.x + x
     }
 
-    fn generate_terrain(&mut self, sprites: &HashMap<~str, SpriteConfig>) {
+    fn vindex(&self, v: Vector2i) -> i32 {
+        v.y * self.dim.x + v.x
+    }
+
+    fn uindex(&self, x: uint, y: uint) -> uint {
+        y * (self.dim.x as uint) + x
+    }
+
+    fn generate_terrain(&mut self, scfg: &SpriteConfigs,
+                        upstairs: Option<Vector2i>) {
+        let sprites = &scfg.map;
         for x in range(0, self.dim.x) {
             for y in range(0, self.dim.y) {
                 let i = self.index(x, y);
@@ -67,6 +84,25 @@ impl Floor {
             self.tiles[left].sprite = sprites.get(&~"wall").index;
             let right = self.index(self.dim.x-1, y);
             self.tiles[right].sprite = sprites.get(&~"wall").index;
+        }
+
+        if self.level > 0 {
+            self.downstairs = Vector2i::new(
+                randrange(1, self.dim.x as uint - 1) as i32,
+                randrange(1, self.dim.y as uint - 1) as i32
+            );
+            let down = self.vindex(self.downstairs);
+            let s = sprites.get(&~"stairs_down");
+            self.tiles[down].sprite = s.index;
+        }
+
+        match upstairs {
+            Some(v) => {
+                let up = self.vindex(v);
+                let s = sprites.get(&~"stairs_up");
+                self.tiles[up].sprite = s.index;
+            },
+            _ => {}
         }
     }
 
@@ -102,14 +138,38 @@ impl Dungeon {
         &self.floors[self.floor]
     }
 
+    pub fn floor_above<'r>(&'r self) -> Option<&'r Floor> {
+        if self.floor == self.floors.len() - 1 {
+            None
+        } else {
+            Some(&self.floors[self.floor + 1])
+        }
+    }
+
     // Create the terrain for all the dungeon floor
-    pub fn generate_terrain(&mut self, sprites: &SpriteConfigs) {
-        for f in self.floors.mut_iter() {
-            f.generate_terrain(&sprites.map);
+    pub fn generate_terrain(&mut self) {
+        let depth = self.floors.len();
+        for f in self.floors.mut_rev_iter() {
+            let above = if f.level == depth - 1 {
+                None
+            } else {
+                Some(self.floors[f.level + 1].downstairs)
+            };
+            f.generate_terrain(self.sprites, above);
         }
     }
 
     pub fn sprite<'r>(&'r self, sprite: uint) -> &'r SpriteConfig {
         &self.sprites.arr[sprite]
     }
+
+    pub fn update(&mut self, player: &Player) {
+        self.floor = player.pos.floor;
+    }
+}
+
+
+fn randrange<T: Rand + Sub<T, T> + Add<T, T> + Rem<T, T>>(a: T, b: T) -> T {
+    let r: T = random();
+    a + (r % (b - a))
 }

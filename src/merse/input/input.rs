@@ -36,6 +36,8 @@ fn handle_player_event(player: &mut Player, dungeon: &Dungeon,
             keyboard::Right => player.pos.move(dungeon, 1, 0),
             keyboard::Up => player.pos.move(dungeon, 0, -1),
             keyboard::Down => player.pos.move(dungeon, 0, 1),
+            keyboard::Comma => player.pos.descend(dungeon),
+            keyboard::Period => player.pos.ascend(dungeon),
             _ => {}
         },
         _ => {}

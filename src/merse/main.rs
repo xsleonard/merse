@@ -30,14 +30,15 @@ fn main() {
     let c = ~config::load_config(~"./settings.json");
     let mut dungeon = ~Dungeon::new(&c.sprites, c.dungeon.size(),
                                     c.dungeon.depth);
-    let mut player = ~Player::new(dungeon.center(),
-                                  c.sprites.map.get(&~"player").clone());
+    let mut player = ~Player::new(c.sprites.map.get(&~"player").clone(),
+                                  dungeon);
     let mut gui_state = gui::Gui::new(&c.window, &c.spritesheets);
 
-    dungeon.generate_terrain(&c.sprites);
+    dungeon.generate_terrain();
 
     while gui_state.window.is_open() {
         input::handle(gui_state.window, dungeon, player);
+        dungeon.update(player);
         gui_state.display(dungeon, player);
     }
 }

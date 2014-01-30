@@ -38,6 +38,16 @@
         "x": 16,
         "y": 8,
         "solid": true
+      }, {
+        "name": "stairs_up",
+        "x": 11,
+        "y": 21,
+        "solid": false
+      }, {
+        "name": "stairs_down",
+        "x": 12,
+        "y": 21,
+        "solid": false
       }]
   }]
 }

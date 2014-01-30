@@ -4,6 +4,7 @@ use std::num::{max, min, abs};
 
 pub struct Position {
     p: Vector2i,
+    floor: uint,
 }
 
 impl Position {
@@ -34,5 +35,23 @@ impl Position {
 
         self.p.x = max(0, min(p.x, floor.dim.x - 1));
         self.p.y = max(0, min(q.y, floor.dim.y - 1));
+    }
+
+    pub fn ascend(&mut self, dungeon: &Dungeon) {
+        match dungeon.floor_above() {
+            Some(floor) => {
+                if self.p == floor.downstairs {
+                    self.floor += 1;
+                }
+            }
+            None => (),
+        };
+    }
+
+    pub fn descend(&mut self, dungeon: &Dungeon) {
+        print!("Descending...\n");
+        if self.p == dungeon.current_floor().downstairs {
+            self.floor -= 1;
+        }
     }
 }
